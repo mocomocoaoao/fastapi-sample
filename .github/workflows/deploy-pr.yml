@@ -1,0 +1,42 @@
+name: deploy-pr
+on:
+  pull request:
+    paths:
+      - 'app/**'
+      - '.github/workflows/deploy-pr.yml'
+
+env:
+  REGISTORY: ghcr.io 
+
+jobs:
+  build-andpush-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTORY }}/${{ github.repository }} #ghcr.io/mocomocoaoao/fastapi-sample:latest
+          tags: |
+            type=sha,prefix=sha-
+            type=ref,event=branch,pattern={{branch}}
+            type=ref,event=pr,pattern=pr-{{pr}}
+            type=ref,event=tag,pattern={{version}}
+
+      - name: Log in to GitHub container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTORY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app
+          push: true
+          tags: ${{ steps.meta.outputs.tags }} #ghcr.io/nmocomocoaoao/fastapi-sample:latest
+          labels: ${{ steps.meta.outputs.labels }}       
