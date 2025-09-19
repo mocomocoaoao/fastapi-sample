@@ -70,3 +70,10 @@ jobs:
             - Update `fastapi-sample` image to ${{ needs.build-and-push-image.outputs.IMAGE_FULL_NAME }}
 
 
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+           ${{ runner.os }}-pip-
